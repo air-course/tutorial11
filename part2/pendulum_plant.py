@@ -640,9 +640,17 @@ class PendulumPlant:
             print(f"Error during conversion: {process.stderr.decode()}")
 
 def plot_timeseries(T, X, U):
-    plt.plot(T, np.asarray(X).T[0], label="theta")
-    plt.plot(T, np.asarray(X).T[1], label="theta dot")
-    plt.plot(T, U, label="u")
+    plt.figure(figsize=(10, 4))
+    plt.subplot(1, 2, 1)
+    plt.plot(T, np.asarray(X).T[0], label=r"\theta")
+    plt.plot(T, np.asarray(X).T[0], label=r"\dot\theta")
+    plt.grid()
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(T, U, label="u_main")
     plt.legend(loc="best")
+    plt.grid()
+
+    plt.tight_layout()
     plt.show()
 

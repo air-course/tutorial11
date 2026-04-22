@@ -8,6 +8,7 @@ import subprocess
 import os
 import ast
 import time
+import traceback
 from part2.misc import download_video
 try:
     from cloudpendulumclient.client import Client
@@ -475,7 +476,7 @@ class PendulumPlant:
         preparation_time = 1.0
         n = int(experiment_time / dt)
 
-        session_token, url = client.start_experiment(user_token, "SimplePendulum", experiment_time+1, preparation_time, record=False)
+        session_token, url = client.start_experiment(user_token, "SimplePendulum", experiment_time+0.01, preparation_time, record=False)
 
         # Set Kp, Kd to zero for torque control
         kp = 0.0
@@ -490,31 +491,36 @@ class PendulumPlant:
         i = 0
         t_start = time.time()
 
-        while i < n:
-            meas_time_vec[i] = time.time() - t_start
-
-            # Measure and record data
-            meas_x[i] = np.array( client.get_position(session_token) + client.get_velocity(session_token))
-            meas_u[i] = client.get_torque(session_token)
-
-            tau = 0
-            if controller is not None:
-                tau = controller.get_control_output(self.x)
-            client.set_torque(tau, session_token)
-
-            des_u[i] = tau
-
-            i += 1
-            sleep_duration = t_start + i * dt - time.time()
-            self.wait_for_control_loop_end(sleep_duration)
-
-        video_url = client.stop_experiment(session_token)
-
-        if save_video:
-            video_path = download_video(video_url)
-        else:
+        try:
+            while i < n:
+                meas_time_vec[i] = time.time() - t_start
+    
+                # Measure and record data
+                meas_x[i] = np.array( [client.get_position(session_token),  client.get_velocity(session_token)] )
+                meas_u[i] = client.get_torque(session_token)
+    
+                tau = 0
+                if controller is not None:
+                    tau = controller.get_control_output(self.x)
+                client.set_torque(tau, session_token)
+    
+                des_u[i] = tau
+    
+                i += 1
+                sleep_duration = t_start + i * dt - time.time()
+                self.wait_for_control_loop_end(sleep_duration)
+    
+            video_url = client.stop_experiment(session_token)
+    
+            if save_video:
+                video_path = download_video(video_url)
+            else:
+                video_path = ""
+        except:
+            print(traceback.format_exc())
             video_path = ""
-
+            video_url = ""
+            
         return meas_time_vec, meas_x, meas_u, des_u, video_url, video_path
 
 
@@ -640,9 +646,17 @@ class PendulumPlant:
             print(f"Error during conversion: {process.stderr.decode()}")
 
 def plot_timeseries(T, X, U):
-    plt.plot(T, np.asarray(X).T[0], label="theta")
-    plt.plot(T, np.asarray(X).T[1], label="theta dot")
-    plt.plot(T, U, label="u")
+    plt.figure(figsize=(10, 4))
+    plt.subplot(1, 2, 1)
+    plt.plot(T, np.asarray(X).T[0], label=r"\theta")
+    plt.plot(T, np.asarray(X).T[0], label=r"\dot\theta")
+    plt.grid()
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(T, U, label="u_main")
     plt.legend(loc="best")
+    plt.grid()
+
+    plt.tight_layout()
     plt.show()
 
