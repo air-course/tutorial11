@@ -183,7 +183,7 @@ class PendulumPlant:
         itepl = ax4.plot(0, 0, color = "tab:orange", label = "iterations")[0]
 
         ax3.set(xlim=[0, 10], ylim=[0.001, 100], xlabel='Time [s]', ylabel='Cost')
-        ax4.set(ylim = [0, 50])
+        ax4.set(ylim = [0, N])
         ax4.set_ylabel(ylabel='Iterations', color='tab:orange')
         ax4.tick_params(axis='y', labelcolor='tab:orange')
         ax3.set_yscale('log')
@@ -227,7 +227,8 @@ class PendulumPlant:
         ani = mplanimation.FuncAnimation(fig=fig, func=update_MPC_plot, frames=int(len(self.t_values)/10), interval = 100)
         if vid:
             ani.save(vidname + ".gif")
-        plt.show()    
+        else:
+            plt.show()    
     '''
     def animate_MPC_plot(self):
         moviewriter = mplanimation.FFMpegWriter(fps = 10)
@@ -498,7 +499,8 @@ class PendulumPlant:
                 # Measure and record data
                 meas_x[i] = np.array( [client.get_position(session_token),  client.get_velocity(session_token)] )
                 meas_u[i] = client.get_torque(session_token)
-    
+
+                self.x = meas_x[i]
                 tau = 0
                 if controller is not None:
                     tau = controller.get_control_output(self.x)
@@ -647,15 +649,24 @@ class PendulumPlant:
 
 def plot_timeseries(T, X, U):
     plt.figure(figsize=(10, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(T, np.asarray(X).T[0], label=r"\theta")
-    plt.plot(T, np.asarray(X).T[0], label=r"\dot\theta")
+    plt.subplot(1, 3, 1)
+    plt.plot(T, np.asarray(X).T[0], label=r"$\theta$")
+    plt.ylabel(r"$\theta$ (rad)")
+    plt.xlabel("t (s)")
     plt.grid()
     
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 2)
+    plt.plot(T, np.asarray(X).T[0], label=r"$\dot\theta$")
+    plt.ylabel(r"$\dot\theta$ (rad/s)")
+    plt.grid()
+    plt.xlabel("t (s)")
+
+    plt.subplot(1, 3, 3)
     plt.plot(T, U, label="u_main")
     plt.legend(loc="best")
     plt.grid()
+    plt.xlabel("t (s)")
+    plt.ylabel(r"$\tau$ (Nm)")
 
     plt.tight_layout()
     plt.show()
