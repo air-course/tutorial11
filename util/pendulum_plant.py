@@ -9,7 +9,7 @@ import os
 import ast
 import time
 import traceback
-from part2.misc import download_video
+from util.misc import download_video
 try:
     from cloudpendulumclient.client import Client
     import cloudpendulumclient.data as Data
