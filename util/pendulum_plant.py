@@ -532,6 +532,9 @@ class PendulumPlant:
         import time
 
         # Select pendulum from motor list
+        self.candle = pyCandle.Candle(pyCandle.CAN_BAUD_8M,True)
+        for id in self.candle.ping():
+            self.candle.addMd80(id)
         
         # Now we shall loop over all found drives to change control mode and enable them one by one
         for md in self.candle.md80s:
